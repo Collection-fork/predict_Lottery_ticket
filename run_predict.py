@@ -11,7 +11,7 @@ import tensorflow as tf
 from config import *
 from get_data import get_current_number, spider
 from loguru import logger
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request,Response
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--name', default="ssq", type=str, help="选择训练数据: 双色球/大乐透")
@@ -179,8 +179,9 @@ def predict_api():
     name = request.args.get('name', default='ssq', type=str)
     try:
         result = run(name)
-        return jsonify(json.dumps(result).encode('utf-8').decode('unicode_escape')), 200
-        # return jsonify(result), 200
+        response = Response(json.dumps(result, ensure_ascii=False), mimetype='application/json')
+        return response, 200
+       # return jsonify(result), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
