@@ -179,7 +179,8 @@ def predict_api():
     name = request.args.get('name', default='ssq', type=str)
     try:
         result = run(name)
-        return jsonify(result), 200
+        return jsonify(json.dumps(result).encode('utf-8').decode('unicode_escape')), 200
+        # return jsonify(result), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
