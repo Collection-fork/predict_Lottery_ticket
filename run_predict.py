@@ -11,6 +11,7 @@ import tensorflow as tf
 from config import *
 from get_data import get_current_number, spider
 from loguru import logger
+from flask import Flask
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--name', default="ssq", type=str, help="选择训练数据: 双色球/大乐透")
@@ -18,7 +19,7 @@ args = parser.parse_args()
 
 # 关闭eager模式
 tf.compat.v1.disable_eager_execution()
-
+app = Flask(__name__)
 
 def load_model(name):
     """ 加载模型 """
@@ -172,6 +173,10 @@ def get_final_result(red_graph, red_sess, blue_graph, blue_sess, pred_key_d, nam
             b_name: int(res) + 1 for b_name, res in zip(ball_name_list, pred_result_list)
         }
 
+@app.route('/predict_api', methods=['GET'])
+def predict_api():
+    run(args.name)
+
 
 def run(name):
     """ 执行预测 """
@@ -192,4 +197,4 @@ if __name__ == '__main__':
     if not args.name:
         raise Exception("玩法名称不能为空！")
     else:
-        run(args.name)
+        app.run(host="0.0.0.0", port=5000)
