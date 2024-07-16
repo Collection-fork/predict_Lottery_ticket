@@ -189,6 +189,8 @@ def run(name):
         logger.info("预测结果：{}".format(get_final_result(
             red_graph, red_sess, blue_graph, blue_sess, pred_key_d, name, predict_features_))
         )
+        return json.dumps(get_final_result( red_graph, red_sess, blue_graph, blue_sess, pred_key_d, name, predict_features_), ensure_ascii=False)
+        
     except Exception as e:
         logger.info("模型加载失败，检查模型是否训练，错误：{}".format(e))
 
