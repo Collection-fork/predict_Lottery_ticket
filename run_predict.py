@@ -11,7 +11,7 @@ import tensorflow as tf
 from config import *
 from get_data import get_current_number, spider
 from loguru import logger
-from flask import Flask
+from flask import Flask, jsonify, request
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--name', default="ssq", type=str, help="选择训练数据: 双色球/大乐透")
@@ -69,7 +69,7 @@ def load_model(name):
         logger.info("已加载蓝球模型！")
 
         # 加载关键节点名
-        with open("{}/{}/{}".format(model_path,args.name , pred_key_name)) as f:
+        with open("{}/{}/{}".format(model_path, args.name, pred_key_name)) as f:
             pred_key_d = json.load(f)
 
         current_number = get_current_number(args.name)
@@ -173,9 +173,15 @@ def get_final_result(red_graph, red_sess, blue_graph, blue_sess, pred_key_d, nam
             b_name: int(res) + 1 for b_name, res in zip(ball_name_list, pred_result_list)
         }
 
+
 @app.route('/predict_api', methods=['GET'])
 def predict_api():
-    run(args.name)
+    name = request.args.get('name', default='ssq', type=str)
+    try:
+        result = run(name)
+        return jsonify(result), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 def run(name):
@@ -186,13 +192,14 @@ def run(name):
         data = spider(name, 1, current_number, "predict")
         logger.info("【{}】预测期号：{}".format(name_path[name]["name"], int(current_number) + 1))
         predict_features_ = try_error(1, name, data.iloc[:windows_size], windows_size)
-        logger.info("预测结果：{}".format(get_final_result(
-            red_graph, red_sess, blue_graph, blue_sess, pred_key_d, name, predict_features_))
+        result = get_final_result(
+            red_graph, red_sess, blue_graph, blue_sess, pred_key_d, name, predict_features_
         )
-        return json.dumps(get_final_result( red_graph, red_sess, blue_graph, blue_sess, pred_key_d, name, predict_features_), ensure_ascii=False)
-        
+        logger.info("预测结果：{}".format(result))
+        return result
     except Exception as e:
         logger.info("模型加载失败，检查模型是否训练，错误：{}".format(e))
+        raise e
 
 
 if __name__ == '__main__':
